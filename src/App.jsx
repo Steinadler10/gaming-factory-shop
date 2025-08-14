@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import logo from "./assets/logo.png";
+import hero1 from "@/assets/hero1.png";
+import hero2 from "@/assets/hero2.png";
+import hero3 from "@/assets/hero3.png";
 
 // ----- Utilities -----
 const currency = new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN", maximumFractionDigits: 0 });
@@ -23,17 +26,17 @@ const categories = [
 ];
 const slides = [
   {
-    src: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop",
+    src: hero1,
     title: "Arma tu setup gamer",
     subtitle: "PCs armadas con garantía local y envío rápido",
   },
   {
-    src: "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop",
+    src: hero2,
     title: "GPUs al mejor precio",
     subtitle: "RTX 40 Series • Stock limitado",
   },
   {
-    src: "https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=1600&auto=format&fit=crop",
+    src: hero3,
     title: "Periféricos pro",
     subtitle: "Teclados y mouse con precisión milimétrica",
   },

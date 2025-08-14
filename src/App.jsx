@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, Monitor, Mouse, Keyboard, Cpu, Search, Filter, Trash2, Minus, Plus, X, CreditCard, Truck, ChevronDown, Laptop, Gamepad2, Shield } from "lucide-react";
+import {
+  ShoppingCart, Monitor, Mouse, Keyboard, Cpu, Search, Filter,
+  Trash2, Minus, Plus, X, CreditCard, Truck, ChevronDown,
+  Laptop, Gamepad2, Shield
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,13 +13,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import logo from "./assets/logo.png";
 import hero1 from "@/assets/hero1.png";
 import hero2 from "@/assets/hero2.png";
 import hero3 from "@/assets/hero3.png";
 
 // ----- Utilities -----
-const currency = new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN", maximumFractionDigits: 0 });
+const currency = new Intl.NumberFormat("es-PE", {
+  style: "currency",
+  currency: "PEN",
+  maximumFractionDigits: 0
+});
 
 const categories = [
   { id: "pc", name: "PCs Armadas", icon: <Laptop className="w-4 h-4" /> },
@@ -24,6 +33,39 @@ const categories = [
   { id: "keyboard", name: "Teclados", icon: <Keyboard className="w-4 h-4" /> },
   { id: "otros", name: "Accesorios", icon: <Gamepad2 className="w-4 h-4" /> },
 ];
+
+// ✅ Resolver imágenes desde /public/products
+const getImg = (p) => {
+  // URL externa → usar tal cual
+  if (p.img?.startsWith("http")) return p.img;
+  // Ya viene /products/archivo → respetar
+  if (p.img?.startsWith("/products/")) return p.img;
+  // Vino como "/archivo.jpg" → normalizar a /products/archivo.jpg
+  if (p.img?.startsWith("/")) return `/products${p.img}`;
+  // Vino como "archivo.jpg" → /products/archivo.jpg
+  if (p.img) return `/products/${p.img}`;
+  // Sin img → usar id.jpg en /products
+  return `/products/${p.id}.jpg`;
+};
+
+// ✅ Imagen con fallback de extensiones locales
+function ProductImage({ p, className, alt }) {
+  const [src, setSrc] = useState(getImg(p));
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => {
+        if (src.endsWith(".webp")) setSrc(getImg({ ...p, img: src.replace(".webp", ".jpg") }));
+        else if (src.endsWith(".jpg")) setSrc(getImg({ ...p, img: src.replace(".jpg", ".png") }));
+        else setSrc(p.img?.startsWith("http") ? p.img : "/placeholder.png");
+      }}
+    />
+  );
+}
+
+// ----- Slides (hero) -----
 const slides = [
   {
     src: hero1,
@@ -41,6 +83,8 @@ const slides = [
     subtitle: "Teclados y mouse con precisión milimétrica",
   },
 ];
+
+// ----- Datos de demo -----
 const demoProducts = [
   {
     id: "pc-elite-01",
@@ -108,97 +152,99 @@ const demoProducts = [
     specs: ["Sonido 7.1", "Almohadillas memory foam", "Micrófono removible"],
     tags: ["Confort"],
   },
-  {
-  id: "pc-pro-5800x-4070s",
-  name: "PC Pro Ryzen 7 5800X + RTX 4070 Super",
-  price: 6299,
-  category: "pc",
-  stock: 5,
-  rating: 4.9,
-  img: "/pc-pro-5800x-4070s.jpg",
-  specs: ["Ryzen 7 5800X", "32GB DDR4", "1TB NVMe", "RTX 4070 Super 12GB"],
-  tags: ["1440p Ultra", "Best seller"],
-},
-{
-  id: "pc-starter-i5-rtx4060",
-  name: "PC Starter i5 + RTX 4060",
-  price: 3999,
-  category: "pc",
-  stock: 10,
-  rating: 4.6,
-  img: "/pc-starter-i5-rtx4060.jpg",
-  specs: ["Intel Core i5-12400F", "16GB DDR4", "512GB NVMe", "RTX 4060 8GB"],
-  tags: ["Balanceado"],
-},
 
-{
-  id: "gpu-rtx-4070ti-super",
-  name: "GeForce RTX 4070 Ti SUPER 16GB",
-  price: 3699,
-  category: "gpu",
-  stock: 7,
-  rating: 4.8,
-  img: "/gpu-4070ti-super.jpg",
-  specs: ["16GB GDDR6X", "DLSS 3", "Ideal 1440p/4K"],
-  tags: ["Top rendimiento"],
-},
-{
-  id: "gpu-rx-7800xt",
-  name: "Radeon RX 7800 XT 16GB",
-  price: 2899,
-  category: "gpu",
-  stock: 9,
-  rating: 4.5,
-  img: "/gpu-7800xt.jpg",
-  specs: ["16GB GDDR6", "FSR 3", "QHD Gaming"],
-  tags: ["Precio/rendimiento"],
-},
-{
-  id: "mouse-ss-aerox-5",
-  name: "Mouse SteelSeries Aerox 5 Wireless",
-  price: 399,
-  category: "mouse",
-  stock: 20,
-  rating: 4.7,
-  img: "/mouse-aerox5.jpg",
-  specs: ["Ultraligero 74g", "Quantum 2.0 Wireless", "Sensor TrueMove Air"],
-  tags: ["Inalámbrico"],
-},
-{
-  id: "kb-ss-apex-pro-tkl",
-  name: "Teclado SteelSeries Apex Pro TKL",
-  price: 799,
-  category: "keyboard",
-  stock: 12,
-  rating: 4.9,
-  img: "/kb-apex-pro-tkl.jpg",
-  specs: ["Switch OmniPoint 2.0", "RGB por tecla", "Aluminio"],
-  tags: ["Pro"],
-},
-{
-  id: "hs-ss-arctis-nova-7",
-  name: "Headset SteelSeries Arctis Nova 7",
-  price: 649,
-  category: "otros",
-  stock: 15,
-  rating: 4.8,
-  img: "/hs-arctis-nova7.jpg",
-  specs: ["2.4GHz + BT", "Sonido 360°", "Mic ClearCast"],
-  tags: ["Multiplataforma"],
-},
-{
-  id: "pad-ss-qck-heavy-xl",
-  name: "Mousepad SteelSeries QcK Heavy XL",
-  price: 139,
-  category: "otros",
-  stock: 25,
-  rating: 4.6,
-  img: "/pad-qck-heavy-xl.jpg",
-  specs: ["Medidas 900×400mm", "Goma densa", "Precisión"],
-  tags: ["XL"],
-},
-  
+  // Locales (pon los archivos en /public/products con estos nombres)
+  {
+    id: "pcpro5800",
+    name: "PC Pro Ryzen 7 5800X + RTX 4070 Super",
+    price: 6299,
+    category: "pc",
+    stock: 5,
+    rating: 4.9,
+    img: "pcpro5800.jpg", // public/products/pcpro5800.jpg
+    specs: ["Ryzen 7 5800X", "32GB DDR4", "1TB NVMe", "RTX 4070 Super 12GB"],
+    tags: ["1440p Ultra", "Best seller"],
+  },
+  {
+    id: "pc-starter-i5-rtx4060",
+    name: "PC Starter i5 + RTX 4060",
+    price: 3999,
+    category: "pc",
+    stock: 10,
+    rating: 4.6,
+    img: "pc-starter-i5-rtx4060.jpg", // public/products/pc-starter-i5-rtx4060.jpg
+    specs: ["Intel Core i5-12400F", "16GB DDR4", "512GB NVMe", "RTX 4060 8GB"],
+    tags: ["Balanceado"],
+  },
+  {
+    id: "gpu-rtx-4070ti-super",
+    name: "GeForce RTX 4070 Ti SUPER 16GB",
+    price: 3699,
+    category: "gpu",
+    stock: 7,
+    rating: 4.8,
+    img: "gpu-4070ti-super.jpg", // public/products/gpu-4070ti-super.jpg
+    specs: ["16GB GDDR6X", "DLSS 3", "Ideal 1440p/4K"],
+    tags: ["Top rendimiento"],
+  },
+  {
+    id: "gpu-rx-7800xt",
+    name: "Radeon RX 7800 XT 16GB",
+    price: 2899,
+    category: "gpu",
+    stock: 9,
+    rating: 4.5,
+    // sin img → usará /products/gpu-rx-7800xt.jpg
+    specs: ["16GB GDDR6", "FSR 3", "QHD Gaming"],
+    tags: ["Precio/rendimiento"],
+  },
+  {
+    id: "mouse-ss-aerox-5",
+    name: "Mouse SteelSeries Aerox 5 Wireless",
+    price: 399,
+    category: "mouse",
+    stock: 20,
+    rating: 4.7,
+    img: "mouse-aerox5.jpg", // public/products/mouse-aerox5.jpg
+    specs: ["Ultraligero 74g", "Quantum 2.0 Wireless", "Sensor TrueMove Air"],
+    tags: ["Inalámbrico"],
+  },
+  {
+    id: "kb-ss-apex-pro-tkl",
+    name: "Teclado SteelSeries Apex Pro TKL",
+    price: 799,
+    category: "keyboard",
+    stock: 12,
+    rating: 4.9,
+    img: "kb-apex-pro-tkl.jpg", // public/products/kb-apex-pro-tkl.jpg
+    specs: ["Switch OmniPoint 2.0", "RGB por tecla", "Aluminio"],
+    tags: ["Pro"],
+  },
+  {
+    id: "hs-ss-arctis-nova-7",
+    name: "Headset SteelSeries Arctis Nova 7",
+    price: 649,
+    category: "otros",
+    stock: 15,
+    rating: 4.8,
+    img: "hs-arctis-nova7.jpg", // public/products/hs-arctis-nova7.jpg
+    specs: ["2.4GHz + BT", "Sonido 360°", "Mic ClearCast"],
+    tags: ["Multiplataforma"],
+  },
+  {
+    id: "pad-ss-qck-heavy-xl",
+    name: "Mousepad SteelSeries QcK Heavy XL",
+    price: 139,
+    category: "otros",
+    stock: 25,
+    rating: 4.6,
+    img: "pad-qck-heavy-xl.jpg", // public/products/pad-qck-heavy-xl.jpg
+    specs: ["Medidas 900×400mm", "Goma densa", "Precisión"],
+    tags: ["XL"],
+  },
 ];
+
+// ----- Hero Slider -----
 function HeroSlider() {
   const [idx, setIdx] = useState(0);
   const go = (n) => setIdx((p) => (p + n + slides.length) % slides.length);
@@ -219,7 +265,6 @@ function HeroSlider() {
     >
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         <div className="relative rounded-3xl border border-neutral-800 overflow-hidden bg-neutral-900">
-          {/* Imagen deslizante */}
           <div className="relative aspect-[16/8] md:aspect-[16/6]">
             <motion.img
               key={slides[idx].src}
@@ -231,17 +276,25 @@ function HeroSlider() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
             />
+
             {/* Degradado para leer el texto */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
             {/* Texto */}
             <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10">
               <h2 className="text-2xl md:text-4xl font-bold">{slides[idx].title}</h2>
               <p className="text-neutral-300 mt-2">{slides[idx].subtitle}</p>
               <div className="mt-4 flex gap-3">
-                <Button className="bg-red-600 hover:bg-red-500" onClick={() => document.getElementById("catalogo")?.scrollIntoView({behavior:"smooth"})}>
+                <Button
+                  className="bg-red-600 hover:bg-red-500"
+                  onClick={() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" })}
+                >
                   Ver catálogo
                 </Button>
-                <Button variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
                   Ofertas
                 </Button>
               </div>
@@ -280,6 +333,8 @@ function HeroSlider() {
     </section>
   );
 }
+
+// ----- LocalStorage hook -----
 function useLocalStorage(key, initial) {
   const [state, setState] = useState(() => {
     try {
@@ -290,17 +345,21 @@ function useLocalStorage(key, initial) {
     }
   });
   useEffect(() => {
-    try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch {}
   }, [key, state]);
   return [state, setState];
 }
 
+// ----- App -----
 export default function GamerShopApp() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("pop");
   const [page, setPage] = useState(0);
   const productsPerPage = 6;
+
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useLocalStorage("gamer_cart_v1", []);
   const [coupon, setCoupon] = useState("");
@@ -308,74 +367,104 @@ export default function GamerShopApp() {
   const products = demoProducts;
 
   const filtered = useMemo(() => {
-    let list = products.filter(p => (cat === "all" || p.category === cat) && p.name.toLowerCase().includes(query.toLowerCase()));
-    if (sort === "price_asc") list.sort((a,b)=>a.price-b.price);
-    if (sort === "price_desc") list.sort((a,b)=>b.price-a.price);
-    if (sort === "pop") list.sort((a,b)=>b.rating-a.rating);
+    let list = products.filter(
+      (p) =>
+        (cat === "all" || p.category === cat) &&
+        p.name.toLowerCase().includes(query.toLowerCase())
+    );
+    if (sort === "price_asc") list.sort((a, b) => a.price - b.price);
+    if (sort === "price_desc") list.sort((a, b) => b.price - a.price);
+    if (sort === "pop") list.sort((a, b) => b.rating - a.rating);
     return list;
   }, [products, query, cat, sort]);
+
   const start = page * productsPerPage;
-  const end   = start + productsPerPage;
+  const end = start + productsPerPage;
   const paginated = filtered.slice(start, end);
   const totalPages = Math.max(1, Math.ceil(filtered.length / productsPerPage));
+
   useEffect(() => {
-  setPage(0);
-}, [cat, query, sort]);
+    setPage(0);
+  }, [cat, query, sort]);
 
   function addToCart(item) {
     setCart((prev) => {
       const found = prev.find((x) => x.id === item.id);
-      if (found) return prev.map(x => x.id === item.id ? { ...x, qty: Math.min(x.qty + 1, 10) } : x);
-      return [...prev, { id: item.id, name: item.name, price: item.price, img: item.img, qty: 1 }];
+      if (found)
+        return prev.map((x) =>
+          x.id === item.id ? { ...x, qty: Math.min(x.qty + 1, 10) } : x
+        );
+      return [
+        ...prev,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          img: getImg(item),
+          qty: 1,
+        },
+      ];
     });
     setCartOpen(true);
   }
 
   const cartSubtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const discount = coupon.trim().toUpperCase() === "GG10" ? cartSubtotal * 0.10 : 0;
-  const shipping = cartSubtotal > 2500 ? 0 : (cartSubtotal === 0 ? 0 : 25);
+  const discount = coupon.trim().toUpperCase() === "GG10" ? cartSubtotal * 0.1 : 0;
+  const shipping = cartSubtotal > 2500 ? 0 : cartSubtotal === 0 ? 0 : 25;
   const total = Math.max(0, cartSubtotal - discount) + shipping;
 
   const removeItem = (id) => setCart((prev) => prev.filter((x) => x.id !== id));
-  const changeQty = (id, delta) => setCart((prev)=> prev.map(x => x.id===id ? { ...x, qty: Math.min(10, Math.max(1, x.qty+delta)) } : x));
+  const changeQty = (id, delta) =>
+    setCart((prev) =>
+      prev.map((x) =>
+        x.id === id
+          ? { ...x, qty: Math.min(10, Math.max(1, x.qty + delta)) }
+          : x
+      )
+    );
   const clearCart = () => setCart([]);
 
   const handleCheckout = () => {
-  // Armamos el mensaje de WhatsApp como un array de líneas para mayor legibilidad
-  const lines = [
-    "Hola, quiero comprar:\n",
-    ...cart.map((i) => `• ${i.qty}x ${i.name} — ${currency.format(i.price)}`),
-    `\nSubtotal: ${currency.format(cartSubtotal)}\n`,
-    discount ? `Descuento: -${currency.format(discount)}\n` : "",
-    `Envío: ${shipping === 0 ? "GRATIS" : currency.format(shipping)}\n`,
-    `Total: ${currency.format(total)}`
-  ];
-
-  // Unimos el array en un solo string y codificamos para URL
-  const text = encodeURIComponent(lines.join(""));
-
-  // Número de WhatsApp de destino (incluye código de país sin el "+")
-  const phone = "956470074"; 
-
-  // Abrimos el enlace en una nueva pestaña solo en entorno navegador
-  if (typeof window !== "undefined") {
-    window.open(`https://wa.me/51${phone}?text=${text}`, "_blank");
-  }
-
-};
+    const lines = [
+      "Hola, quiero comprar:\n",
+      ...cart.map((i) => `• ${i.qty}x ${i.name} — ${currency.format(i.price)}`),
+      `\nSubtotal: ${currency.format(cartSubtotal)}\n`,
+      discount ? `Descuento: -${currency.format(discount)}\n` : "",
+      `Envío: ${shipping === 0 ? "GRATIS" : currency.format(shipping)}\n`,
+      `Total: ${currency.format(total)}`,
+    ];
+    const text = encodeURIComponent(lines.join(""));
+    const phone = "956470074";
+    if (typeof window !== "undefined") {
+      window.open(`https://wa.me/51${phone}?text=${text}`, "_blank");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-50">
       {/* Topbar */}
       <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/70 border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3">
-          <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} className="flex items-center gap-2">
-            <img src={logo} alt="Gaming Factory Shop" className="h-auto w-60 rounded-xl object-contain" />
-          
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2"
+          >
+            <img
+              src={logo}
+              alt="Gaming Factory Shop"
+              className="h-auto w-60 rounded-xl object-contain"
+            />
           </motion.div>
+
           <div className="ml-auto flex items-center gap-2">
             <div className="hidden md:flex items-center gap-2">
-              <Input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Buscar producto..." className="w-[260px] bg-neutral-900 border-neutral-800" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar producto..."
+                className="w-[260px] bg-neutral-900 border-neutral-800"
+              />
               <Select value={sort} onValueChange={setSort}>
                 <SelectTrigger className="w-[180px] bg-neutral-900 border-neutral-800">
                   <SelectValue placeholder="Ordenar" />
@@ -391,9 +480,13 @@ export default function GamerShopApp() {
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
                 <Button variant="secondary" className="gap-2">
-                  <ShoppingCart className="w-4 h-4"/>
+                  <ShoppingCart className="w-4 h-4" />
                   <span className="hidden sm:inline">Carrito</span>
-                  {cart.length>0 && (<Badge variant="secondary" className="ml-1">{cart.reduce((s,i)=>s+i.qty,0)}</Badge>)}
+                  {cart.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {cart.reduce((s, i) => s + i.qty, 0)}
+                    </Badge>
+                  )}
                 </Button>
               </SheetTrigger>
               <SheetContent className="bg-neutral-950 border-neutral-800 text-neutral-50 w-full sm:max-w-md">
@@ -401,47 +494,102 @@ export default function GamerShopApp() {
                   <SheetTitle>Tu Carrito</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4 space-y-4">
-                  {cart.length===0 && (
+                  {cart.length === 0 && (
                     <p className="text-neutral-400">Aún no has agregado productos.</p>
                   )}
-                  {cart.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 border border-neutral-800 rounded-xl p-3">
-                      <img src={item.img} alt={item.name} className="w-16 h-16 rounded-lg object-cover"/>
+
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 border border-neutral-800 rounded-xl p-3"
+                    >
+                      <ProductImage
+                        p={item}
+                        alt={item.name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium">{item.name}</p>
-                        <p className="text-sm text-neutral-400">{currency.format(item.price)}</p>
+                        <p className="text-sm text-neutral-400">
+                          {currency.format(item.price)}
+                        </p>
                         <div className="mt-2 inline-flex items-center gap-2">
-                          <Button size="icon" variant="secondary" onClick={()=>changeQty(item.id,-1)}><Minus className="w-4 h-4"/></Button>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={() => changeQty(item.id, -1)}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
                           <span className="w-6 text-center">{item.qty}</span>
-                          <Button size="icon" variant="secondary" onClick={()=>changeQty(item.id,1)}><Plus className="w-4 h-4"/></Button>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={() => changeQty(item.id, 1)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={()=>removeItem(item.id)}>
-                        <Trash2 className="w-4 h-4"/>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeItem(item.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
 
-                  {cart.length>0 && (
+                  {cart.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex gap-2">
-                        <Input placeholder="Cupón (GG10)" value={coupon} onChange={(e)=>setCoupon(e.target.value)} className="bg-neutral-900 border-neutral-800"/>
-                        <Button variant="outline" className="border-neutral-700">Aplicar</Button>
+                        <Input
+                          placeholder="Cupón (GG10)"
+                          value={coupon}
+                          onChange={(e) => setCoupon(e.target.value)}
+                          className="bg-neutral-900 border-neutral-800"
+                        />
+                        <Button variant="outline" className="border-neutral-700">
+                          Aplicar
+                        </Button>
                       </div>
                       <div className="border-t border-neutral-800 pt-3 space-y-2 text-sm">
-                        <div className="flex justify-between"><span>Subtotal</span><span>{currency.format(cartSubtotal)}</span></div>
-                        {discount>0 && <div className="flex justify-between text-emerald-400"><span>Descuento</span><span>-{currency.format(discount)}</span></div>}
-                        <div className="flex justify-between"><span>Envío</span><span>{shipping===0?"GRATIS":currency.format(shipping)}</span></div>
-                        <div className="flex justify-between font-semibold text-base pt-2"><span>Total</span><span>{currency.format(total)}</span></div>
+                        <div className="flex justify-between">
+                          <span>Subtotal</span>
+                          <span>{currency.format(cartSubtotal)}</span>
+                        </div>
+                        {discount > 0 && (
+                          <div className="flex justify-between text-emerald-400">
+                            <span>Descuento</span>
+                            <span>-{currency.format(discount)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>Envío</span>
+                          <span>
+                            {shipping === 0 ? "GRATIS" : currency.format(shipping)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between font-semibold text-base pt-2">
+                          <span>Total</span>
+                          <span>{currency.format(total)}</span>
+                        </div>
                       </div>
                       <div className="grid gap-2">
-                        <Button className="w-full bg-red-600 hover:bg-red-500" onClick={handleCheckout}>
-                          <CreditCard className="w-4 h-4 mr-2"/> Finalizar compra
+                        <Button
+                          className="w-full bg-red-600 hover:bg-red-500"
+                          onClick={handleCheckout}
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" /> Finalizar compra
                         </Button>
                         <Button variant="ghost" className="w-full" onClick={clearCart}>
-                          <X className="w-4 h-4 mr-2"/> Vaciar carrito
+                          <X className="w-4 h-4 mr-2" /> Vaciar carrito
                         </Button>
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><Truck className="w-3 h-3"/> Envíos gratis desde S/ 2,500 en Lima Metropolitana</p>
+                        <p className="text-xs text-neutral-400 flex items-center gap-1">
+                          <Truck className="w-3 h-3" /> Envíos gratis desde S/ 2,500 en
+                          Lima Metropolitana
+                        </p>
                       </div>
                     </div>
                   )}
@@ -452,14 +600,19 @@ export default function GamerShopApp() {
         </div>
       </header>
 
-    <HeroSlider />
+      <HeroSlider />
 
       {/* Controls (mobile) */}
       <div className="md:hidden sticky top-[57px] z-30 bg-neutral-950 border-y border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">
-            <Search className="w-4 h-4 text-neutral-400"/>
-            <Input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Buscar producto..." className="bg-neutral-900 border-neutral-800"/>
+            <Search className="w-4 h-4 text-neutral-400" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar producto..."
+              className="bg-neutral-900 border-neutral-800"
+            />
           </div>
           <Select value={sort} onValueChange={setSort}>
             <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-800">
@@ -480,118 +633,119 @@ export default function GamerShopApp() {
           <div className="flex items-center justify-between gap-2 mb-4">
             <TabsList className="flex-wrap">
               <TabsTrigger value="all">Todos</TabsTrigger>
-              {categories.map(c => (
-                <TabsTrigger key={c.id} value={c.id} className="flex items-center gap-2">{c.icon}{c.name}</TabsTrigger>
+              {categories.map((c) => (
+                <TabsTrigger key={c.id} value={c.id} className="flex items-center gap-2">
+                  {c.icon}
+                  {c.name}
+                </TabsTrigger>
               ))}
             </TabsList>
             <div className="hidden md:flex items-center gap-2 text-neutral-400 text-sm">
-              <Filter className="w-4 h-4"/> {filtered.length} resultados
+              <Filter className="w-4 h-4" /> {filtered.length} resultados
             </div>
           </div>
 
           <TabsContent value={cat} className="mt-0">
-  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    {paginated.map((p) => (
-      <Card
-        key={p.id}
-        className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors"
-      >
-        <CardHeader>
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-neutral-800">
-            <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
-            <div className="absolute top-2 left-2 flex flex-wrap gap-2">
-              {p.tags?.map((t) => (
-                <Badge
-                  key={t}
-                  variant="secondary"
-                  className="bg-neutral-100/10 text-neutral-100 border-neutral-700"
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginated.map((p) => (
+                <Card
+                  key={p.id}
+                  className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors"
                 >
-                  {t}
-                </Badge>
+                  <CardHeader>
+                    <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-neutral-800">
+                      <ProductImage p={p} alt={p.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-2 left-2 flex flex-wrap gap-2">
+                        {p.tags?.map((t) => (
+                          <Badge
+                            key={t}
+                            variant="secondary"
+                            className="bg-neutral-100/10 text-neutral-100 border-neutral-700"
+                          >
+                            {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg mt-2 leading-tight">{p.name}</CardTitle>
+                    <CardDescription className="mt-1">
+                      {p.specs?.slice(0, 3).join(" • ")}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xl font-semibold">{currency.format(p.price)}</div>
+                        <div className="text-xs text-neutral-400">
+                          Stock: {p.stock} • ⭐ {p.rating}
+                        </div>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="secondary" onClick={() => addToCart(p)}>
+                              <ShoppingCart className="w-4 h-4 mr-2" /> Agregar
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Añadir al carrito</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </CardContent>
+
+                  <CardFooter className="text-xs text-neutral-400">
+                    {p.specs?.map((s) => (
+                      <span key={s} className="mr-2">
+                        • {s}
+                      </span>
+                    ))}
+                  </CardFooter>
+                </Card>
               ))}
             </div>
-          </div>
-          <CardTitle className="text-lg mt-2 leading-tight">{p.name}</CardTitle>
-          <CardDescription className="mt-1">
-            {p.specs?.slice(0, 3).join(" • ")}
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xl font-semibold">{currency.format(p.price)}</div>
-              <div className="text-xs text-neutral-400">
-                Stock: {p.stock} • ⭐ {p.rating}
+            {filtered.length > productsPerPage && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  className="border-neutral-700"
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                >
+                  ← Anterior
+                </Button>
+
+                <span className="text-sm text-neutral-400 px-3">
+                  Página {page + 1} de {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  className="border-neutral-700"
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                >
+                  Siguiente →
+                </Button>
               </div>
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="secondary" onClick={() => addToCart(p)}>
-                    <ShoppingCart className="w-4 h-4 mr-2" /> Agregar
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Añadir al carrito</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </CardContent>
-
-        <CardFooter className="text-xs text-neutral-400">
-          {p.specs?.map((s) => (
-            <span key={s} className="mr-2">
-              • {s}
-            </span>
-          ))}
-        </CardFooter>
-      </Card>
-    ))}
-  </div>
-
-  {/* Paginación: fuera del grid/map */}
-  {filtered.length > productsPerPage && (
-    <div className="mt-6 flex items-center justify-center gap-2">
-      <Button
-        variant="outline"
-        className="border-neutral-700"
-        onClick={() => setPage((p) => Math.max(0, p - 1))}
-        disabled={page === 0}
-      >
-        ← Anterior
-      </Button>
-
-      <span className="text-sm text-neutral-400 px-3">
-        Página {page + 1} de {totalPages}
-      </span>
-
-      <Button
-        variant="outline"
-        className="border-neutral-700"
-        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-        disabled={page >= totalPages - 1}
-      >
-        Siguiente →
-      </Button>
-    </div>
-  )}
-</TabsContent>
-
-{/* ⬇️ ESTAS DOS LÍNEAS SON LAS QUE FALTABAN */}
-</Tabs>
-</section>
-         
+            )}
+          </TabsContent>
+        </Tabs>
+      </section>
 
       {/* Footer */}
       <footer className="border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8 text-sm text-neutral-300">
           <div>
             <div className="flex items-center gap-2 font-semibold text-neutral-100">
-              <Shield className="w-4 h-4"/> Gaming Factory
+              <Shield className="w-4 h-4" /> Gaming Factory
             </div>
-            <p className="mt-2 text-neutral-400">Hardware gamer con garantía local y facturación. Lima, Perú.</p>
+            <p className="mt-2 text-neutral-400">
+              Hardware gamer con garantía local y facturación. Lima, Perú.
+            </p>
           </div>
           <div>
             <p className="font-semibold mb-2 text-neutral-100">Atención</p>
@@ -610,7 +764,9 @@ export default function GamerShopApp() {
             </ul>
           </div>
         </div>
-        <div className="text-center text-xs text-neutral-500 pb-8">© {new Date().getFullYear()} Gaming Factory. Todos los derechos reservados.</div>
+        <div className="text-center text-xs text-neutral-500 pb-8">
+          © {new Date().getFullYear()} Gaming Factory. Todos los derechos reservados.
+        </div>
       </footer>
     </div>
   );

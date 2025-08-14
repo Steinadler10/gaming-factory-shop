@@ -108,6 +108,96 @@ const demoProducts = [
     specs: ["Sonido 7.1", "Almohadillas memory foam", "Micrófono removible"],
     tags: ["Confort"],
   },
+  {
+  id: "pc-pro-5800x-4070s",
+  name: "PC Pro Ryzen 7 5800X + RTX 4070 Super",
+  price: 6299,
+  category: "pc",
+  stock: 5,
+  rating: 4.9,
+  img: "/pc-pro-5800x-4070s.jpg",
+  specs: ["Ryzen 7 5800X", "32GB DDR4", "1TB NVMe", "RTX 4070 Super 12GB"],
+  tags: ["1440p Ultra", "Best seller"],
+},
+{
+  id: "pc-starter-i5-rtx4060",
+  name: "PC Starter i5 + RTX 4060",
+  price: 3999,
+  category: "pc",
+  stock: 10,
+  rating: 4.6,
+  img: "/pc-starter-i5-rtx4060.jpg",
+  specs: ["Intel Core i5-12400F", "16GB DDR4", "512GB NVMe", "RTX 4060 8GB"],
+  tags: ["Balanceado"],
+},
+
+{
+  id: "gpu-rtx-4070ti-super",
+  name: "GeForce RTX 4070 Ti SUPER 16GB",
+  price: 3699,
+  category: "gpu",
+  stock: 7,
+  rating: 4.8,
+  img: "/gpu-4070ti-super.jpg",
+  specs: ["16GB GDDR6X", "DLSS 3", "Ideal 1440p/4K"],
+  tags: ["Top rendimiento"],
+},
+{
+  id: "gpu-rx-7800xt",
+  name: "Radeon RX 7800 XT 16GB",
+  price: 2899,
+  category: "gpu",
+  stock: 9,
+  rating: 4.5,
+  img: "/gpu-7800xt.jpg",
+  specs: ["16GB GDDR6", "FSR 3", "QHD Gaming"],
+  tags: ["Precio/rendimiento"],
+},
+{
+  id: "mouse-ss-aerox-5",
+  name: "Mouse SteelSeries Aerox 5 Wireless",
+  price: 399,
+  category: "mouse",
+  stock: 20,
+  rating: 4.7,
+  img: "/mouse-aerox5.jpg",
+  specs: ["Ultraligero 74g", "Quantum 2.0 Wireless", "Sensor TrueMove Air"],
+  tags: ["Inalámbrico"],
+},
+{
+  id: "kb-ss-apex-pro-tkl",
+  name: "Teclado SteelSeries Apex Pro TKL",
+  price: 799,
+  category: "keyboard",
+  stock: 12,
+  rating: 4.9,
+  img: "/kb-apex-pro-tkl.jpg",
+  specs: ["Switch OmniPoint 2.0", "RGB por tecla", "Aluminio"],
+  tags: ["Pro"],
+},
+{
+  id: "hs-ss-arctis-nova-7",
+  name: "Headset SteelSeries Arctis Nova 7",
+  price: 649,
+  category: "otros",
+  stock: 15,
+  rating: 4.8,
+  img: "/hs-arctis-nova7.jpg",
+  specs: ["2.4GHz + BT", "Sonido 360°", "Mic ClearCast"],
+  tags: ["Multiplataforma"],
+},
+{
+  id: "pad-ss-qck-heavy-xl",
+  name: "Mousepad SteelSeries QcK Heavy XL",
+  price: 139,
+  category: "otros",
+  stock: 25,
+  rating: 4.6,
+  img: "/pad-qck-heavy-xl.jpg",
+  specs: ["Medidas 900×400mm", "Goma densa", "Precisión"],
+  tags: ["XL"],
+},
+  
 ];
 function HeroSlider() {
   const [idx, setIdx] = useState(0);
@@ -209,6 +299,8 @@ export default function GamerShopApp() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("pop");
+  const [page, setPage] = useState(0);
+  const productsPerPage = 6;
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useLocalStorage("gamer_cart_v1", []);
   const [coupon, setCoupon] = useState("");
@@ -222,15 +314,22 @@ export default function GamerShopApp() {
     if (sort === "pop") list.sort((a,b)=>b.rating-a.rating);
     return list;
   }, [products, query, cat, sort]);
+  const start = page * productsPerPage;
+  const end   = start + productsPerPage;
+  const paginated = filtered.slice(start, end);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / productsPerPage));
+  useEffect(() => {
+  setPage(0);
+}, [cat, query, sort]);
 
-  const addToCart = (item) => {
+  function addToCart(item) {
     setCart((prev) => {
       const found = prev.find((x) => x.id === item.id);
-      if (found) return prev.map(x => x.id===item.id ? { ...x, qty: Math.min(x.qty+1, 10) } : x);
+      if (found) return prev.map(x => x.id === item.id ? { ...x, qty: Math.min(x.qty + 1, 10) } : x);
       return [...prev, { id: item.id, name: item.name, price: item.price, img: item.img, qty: 1 }];
     });
     setCartOpen(true);
-  };
+  }
 
   const cartSubtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const discount = coupon.trim().toUpperCase() === "GG10" ? cartSubtotal * 0.10 : 0;
@@ -391,48 +490,99 @@ export default function GamerShopApp() {
           </div>
 
           <TabsContent value={cat} className="mt-0">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map(p => (
-                <Card key={p.id} className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors">
-                  <CardHeader>
-                    <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-neutral-800">
-                      <img src={p.img} alt={p.name} className="w-full h-full object-cover"/>
-                      <div className="absolute top-2 left-2 flex flex-wrap gap-2">
-                        {p.tags?.map(t => <Badge key={t} variant="secondary" className="bg-neutral-100/10 text-neutral-100 border-neutral-700">{t}</Badge>)}
-                      </div>
-                    </div>
-                    <CardTitle className="text-lg mt-2 leading-tight">{p.name}</CardTitle>
-                    <CardDescription className="mt-1">{p.specs?.slice(0,3).join(" • ")}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xl font-semibold">{currency.format(p.price)}</div>
-                        <div className="text-xs text-neutral-400">Stock: {p.stock} • ⭐ {p.rating}</div>
-                      </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="secondary" onClick={()=>addToCart(p)} className="">
-                              <ShoppingCart className="w-4 h-4 mr-2"/> Agregar
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Añadir al carrito</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="text-xs text-neutral-400">
-                    {p.specs?.map(s=> <span key={s} className="mr-2">• {s}</span>)}
-                  </CardFooter>
-                </Card>
+  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {paginated.map((p) => (
+      <Card
+        key={p.id}
+        className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors"
+      >
+        <CardHeader>
+          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-neutral-800">
+            <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
+            <div className="absolute top-2 left-2 flex flex-wrap gap-2">
+              {p.tags?.map((t) => (
+                <Badge
+                  key={t}
+                  variant="secondary"
+                  className="bg-neutral-100/10 text-neutral-100 border-neutral-700"
+                >
+                  {t}
+                </Badge>
               ))}
             </div>
-          </TabsContent>
-        </Tabs>
-      </section>
+          </div>
+          <CardTitle className="text-lg mt-2 leading-tight">{p.name}</CardTitle>
+          <CardDescription className="mt-1">
+            {p.specs?.slice(0, 3).join(" • ")}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xl font-semibold">{currency.format(p.price)}</div>
+              <div className="text-xs text-neutral-400">
+                Stock: {p.stock} • ⭐ {p.rating}
+              </div>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="secondary" onClick={() => addToCart(p)}>
+                    <ShoppingCart className="w-4 h-4 mr-2" /> Agregar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Añadir al carrito</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardContent>
+
+        <CardFooter className="text-xs text-neutral-400">
+          {p.specs?.map((s) => (
+            <span key={s} className="mr-2">
+              • {s}
+            </span>
+          ))}
+        </CardFooter>
+      </Card>
+    ))}
+  </div>
+
+  {/* Paginación: fuera del grid/map */}
+  {filtered.length > productsPerPage && (
+    <div className="mt-6 flex items-center justify-center gap-2">
+      <Button
+        variant="outline"
+        className="border-neutral-700"
+        onClick={() => setPage((p) => Math.max(0, p - 1))}
+        disabled={page === 0}
+      >
+        ← Anterior
+      </Button>
+
+      <span className="text-sm text-neutral-400 px-3">
+        Página {page + 1} de {totalPages}
+      </span>
+
+      <Button
+        variant="outline"
+        className="border-neutral-700"
+        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+        disabled={page >= totalPages - 1}
+      >
+        Siguiente →
+      </Button>
+    </div>
+  )}
+</TabsContent>
+
+{/* ⬇️ ESTAS DOS LÍNEAS SON LAS QUE FALTABAN */}
+</Tabs>
+</section>
+         
 
       {/* Footer */}
       <footer className="border-t border-neutral-800">

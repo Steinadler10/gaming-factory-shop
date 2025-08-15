@@ -19,7 +19,27 @@ import hero1 from "@/assets/hero1.png";
 import hero2 from "@/assets/hero2.png";
 import hero3 from "@/assets/hero3.png";
 
-// ----- Utilities -----
+/* -------- Imagen de producto con fallback por extensión -------- */
+function ProductImage({ id, alt, className }) {
+  const [src, setSrc] = useState(`/products/${id}.webp`);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+      onError={() => {
+        if (src.endsWith(".webp")) setSrc(`/products/${id}.jpg`);
+        else if (src.endsWith(".jpg")) setSrc(`/products/${id}.png`);
+        else setSrc("/placeholder.png");
+      }}
+    />
+  );
+}
+
+/* ---------------- Utilities ---------------- */
 const currency = new Intl.NumberFormat("es-PE", {
   style: "currency",
   currency: "PEN",
@@ -34,57 +54,14 @@ const categories = [
   { id: "otros", name: "Accesorios", icon: <Gamepad2 className="w-4 h-4" /> },
 ];
 
-// ✅ Resolver imágenes desde /public/products
-const getImg = (p) => {
-  // URL externa → usar tal cual
-  if (p.img?.startsWith("http")) return p.img;
-  // Ya viene /products/archivo → respetar
-  if (p.img?.startsWith("/products/")) return p.img;
-  // Vino como "/archivo.jpg" → normalizar a /products/archivo.jpg
-  if (p.img?.startsWith("/")) return `/products${p.img}`;
-  // Vino como "archivo.jpg" → /products/archivo.jpg
-  if (p.img) return `/products/${p.img}`;
-  // Sin img → usar id.jpg en /products
-  return `/products/${p.id}.jpg`;
-};
-
-// ✅ Imagen con fallback de extensiones locales
-function ProductImage({ p, className, alt }) {
-  const [src, setSrc] = useState(getImg(p));
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => {
-        if (src.endsWith(".webp")) setSrc(getImg({ ...p, img: src.replace(".webp", ".jpg") }));
-        else if (src.endsWith(".jpg")) setSrc(getImg({ ...p, img: src.replace(".jpg", ".png") }));
-        else setSrc(p.img?.startsWith("http") ? p.img : "/placeholder.png");
-      }}
-    />
-  );
-}
-
-// ----- Slides (hero) -----
+/* ---------------- Slides (hero) ---------------- */
 const slides = [
-  {
-    src: hero1,
-    title: "Arma tu setup gamer",
-    subtitle: "PCs armadas con garantía local y envío rápido",
-  },
-  {
-    src: hero2,
-    title: "GPUs al mejor precio",
-    subtitle: "RTX 40 Series • Stock limitado",
-  },
-  {
-    src: hero3,
-    title: "Periféricos pro",
-    subtitle: "Teclados y mouse con precisión milimétrica",
-  },
+  { src: hero1, title: "Arma tu setup gamer", subtitle: "PCs armadas con garantía local y envío rápido" },
+  { src: hero2, title: "GPUs al mejor precio", subtitle: "RTX 40 Series • Stock limitado" },
+  { src: hero3, title: "Periféricos pro", subtitle: "Teclados y mouse con precisión milimétrica" },
 ];
 
-// ----- Datos de demo -----
+/* ---------------- Datos de demo ---------------- */
 const demoProducts = [
   {
     id: "pc-elite-01",
@@ -244,12 +221,11 @@ const demoProducts = [
   },
 ];
 
-// ----- Hero Slider -----
+/* ---------------- Hero Slider ---------------- */
 function HeroSlider() {
   const [idx, setIdx] = useState(0);
   const go = (n) => setIdx((p) => (p + n + slides.length) % slides.length);
 
-  // autoplay cada 4s, pausa al pasar el mouse
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     if (paused) return;
@@ -276,11 +252,7 @@ function HeroSlider() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
             />
-
-            {/* Degradado para leer el texto */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-            {/* Texto */}
             <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10">
               <h2 className="text-2xl md:text-4xl font-bold">{slides[idx].title}</h2>
               <p className="text-neutral-300 mt-2">{slides[idx].subtitle}</p>
@@ -291,16 +263,11 @@ function HeroSlider() {
                 >
                   Ver catálogo
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                >
+                <Button variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
                   Ofertas
                 </Button>
               </div>
             </div>
-
-            {/* Flechas */}
             <button
               aria-label="Anterior"
               onClick={() => go(-1)}
@@ -315,8 +282,6 @@ function HeroSlider() {
             >
               ›
             </button>
-
-            {/* Dots */}
             <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
               {slides.map((_, i) => (
                 <button
@@ -334,7 +299,7 @@ function HeroSlider() {
   );
 }
 
-// ----- LocalStorage hook -----
+/* ---------------- LocalStorage hook ---------------- */
 function useLocalStorage(key, initial) {
   const [state, setState] = useState(() => {
     try {
@@ -352,7 +317,7 @@ function useLocalStorage(key, initial) {
   return [state, setState];
 }
 
-// ----- App -----
+/* ---------------- App ---------------- */
 export default function GamerShopApp() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
@@ -383,9 +348,7 @@ export default function GamerShopApp() {
   const paginated = filtered.slice(start, end);
   const totalPages = Math.max(1, Math.ceil(filtered.length / productsPerPage));
 
-  useEffect(() => {
-    setPage(0);
-  }, [cat, query, sort]);
+  useEffect(() => { setPage(0); }, [cat, query, sort]);
 
   function addToCart(item) {
     setCart((prev) => {
@@ -400,8 +363,7 @@ export default function GamerShopApp() {
           id: item.id,
           name: item.name,
           price: item.price,
-          img: getImg(item),
-          qty: 1,
+          qty: 1, // 👈 no guardamos img; la resolvemos por id
         },
       ];
     });
@@ -445,16 +407,8 @@ export default function GamerShopApp() {
       {/* Topbar */}
       <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/70 border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2"
-          >
-            <img
-              src={logo}
-              alt="Gaming Factory Shop"
-              className="h-auto w-60 rounded-xl object-contain"
-            />
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
+            <img src={logo} alt="Gaming Factory Shop" className="h-auto w-60 rounded-xl object-contain" />
           </motion.div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -499,43 +453,22 @@ export default function GamerShopApp() {
                   )}
 
                   {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 border border-neutral-800 rounded-xl p-3"
-                    >
-                      <ProductImage
-                        p={item}
-                        alt={item.name}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
+                    <div key={item.id} className="flex items-center gap-3 border border-neutral-800 rounded-xl p-3">
+                      <ProductImage id={item.id} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium">{item.name}</p>
-                        <p className="text-sm text-neutral-400">
-                          {currency.format(item.price)}
-                        </p>
+                        <p className="text-sm text-neutral-400">{currency.format(item.price)}</p>
                         <div className="mt-2 inline-flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={() => changeQty(item.id, -1)}
-                          >
+                          <Button size="icon" variant="secondary" onClick={() => changeQty(item.id, -1)}>
                             <Minus className="w-4 h-4" />
                           </Button>
                           <span className="w-6 text-center">{item.qty}</span>
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={() => changeQty(item.id, 1)}
-                          >
+                          <Button size="icon" variant="secondary" onClick={() => changeQty(item.id, 1)}>
                             <Plus className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => removeItem(item.id)}
-                      >
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(item.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -550,45 +483,23 @@ export default function GamerShopApp() {
                           onChange={(e) => setCoupon(e.target.value)}
                           className="bg-neutral-900 border-neutral-800"
                         />
-                        <Button variant="outline" className="border-neutral-700">
-                          Aplicar
-                        </Button>
+                        <Button variant="outline" className="border-neutral-700">Aplicar</Button>
                       </div>
                       <div className="border-t border-neutral-800 pt-3 space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Subtotal</span>
-                          <span>{currency.format(cartSubtotal)}</span>
-                        </div>
-                        {discount > 0 && (
-                          <div className="flex justify-between text-emerald-400">
-                            <span>Descuento</span>
-                            <span>-{currency.format(discount)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span>Envío</span>
-                          <span>
-                            {shipping === 0 ? "GRATIS" : currency.format(shipping)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-semibold text-base pt-2">
-                          <span>Total</span>
-                          <span>{currency.format(total)}</span>
-                        </div>
+                        <div className="flex justify-between"><span>Subtotal</span><span>{currency.format(cartSubtotal)}</span></div>
+                        {discount > 0 && <div className="flex justify-between text-emerald-400"><span>Descuento</span><span>-{currency.format(discount)}</span></div>}
+                        <div className="flex justify-between"><span>Envío</span><span>{shipping === 0 ? "GRATIS" : currency.format(shipping)}</span></div>
+                        <div className="flex justify-between font-semibold text-base pt-2"><span>Total</span><span>{currency.format(total)}</span></div>
                       </div>
                       <div className="grid gap-2">
-                        <Button
-                          className="w-full bg-red-600 hover:bg-red-500"
-                          onClick={handleCheckout}
-                        >
+                        <Button className="w-full bg-red-600 hover:bg-red-500" onClick={handleCheckout}>
                           <CreditCard className="w-4 h-4 mr-2" /> Finalizar compra
                         </Button>
                         <Button variant="ghost" className="w-full" onClick={clearCart}>
                           <X className="w-4 h-4 mr-2" /> Vaciar carrito
                         </Button>
                         <p className="text-xs text-neutral-400 flex items-center gap-1">
-                          <Truck className="w-3 h-3" /> Envíos gratis desde S/ 2,500 en
-                          Lima Metropolitana
+                          <Truck className="w-3 h-3" /> Envíos gratis desde S/ 2,500 en Lima Metropolitana
                         </p>
                       </div>
                     </div>
@@ -635,8 +546,7 @@ export default function GamerShopApp() {
               <TabsTrigger value="all">Todos</TabsTrigger>
               {categories.map((c) => (
                 <TabsTrigger key={c.id} value={c.id} className="flex items-center gap-2">
-                  {c.icon}
-                  {c.name}
+                  {c.icon}{c.name}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -648,38 +558,27 @@ export default function GamerShopApp() {
           <TabsContent value={cat} className="mt-0">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginated.map((p) => (
-                <Card
-                  key={p.id}
-                  className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors"
-                >
+                <Card key={p.id} className="bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 transition-colors">
                   <CardHeader>
                     <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-neutral-800">
-                      <ProductImage p={p} alt={p.name} className="w-full h-full object-cover" />
+                      <ProductImage id={p.id} alt={p.name} className="w-full h-full object-cover" />
                       <div className="absolute top-2 left-2 flex flex-wrap gap-2">
                         {p.tags?.map((t) => (
-                          <Badge
-                            key={t}
-                            variant="secondary"
-                            className="bg-neutral-100/10 text-neutral-100 border-neutral-700"
-                          >
+                          <Badge key={t} variant="secondary" className="bg-neutral-100/10 text-neutral-100 border-neutral-700">
                             {t}
                           </Badge>
                         ))}
                       </div>
                     </div>
                     <CardTitle className="text-lg mt-2 leading-tight">{p.name}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {p.specs?.slice(0, 3).join(" • ")}
-                    </CardDescription>
+                    <CardDescription className="mt-1">{p.specs?.slice(0, 3).join(" • ")}</CardDescription>
                   </CardHeader>
 
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-xl font-semibold">{currency.format(p.price)}</div>
-                        <div className="text-xs text-neutral-400">
-                          Stock: {p.stock} • ⭐ {p.rating}
-                        </div>
+                        <div className="text-xs text-neutral-400">Stock: {p.stock} • ⭐ {p.rating}</div>
                       </div>
                       <TooltipProvider>
                         <Tooltip>
@@ -698,9 +597,7 @@ export default function GamerShopApp() {
 
                   <CardFooter className="text-xs text-neutral-400">
                     {p.specs?.map((s) => (
-                      <span key={s} className="mr-2">
-                        • {s}
-                      </span>
+                      <span key={s} className="mr-2">• {s}</span>
                     ))}
                   </CardFooter>
                 </Card>
@@ -717,11 +614,9 @@ export default function GamerShopApp() {
                 >
                   ← Anterior
                 </Button>
-
                 <span className="text-sm text-neutral-400 px-3">
                   Página {page + 1} de {totalPages}
                 </span>
-
                 <Button
                   variant="outline"
                   className="border-neutral-700"
